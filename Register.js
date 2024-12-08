@@ -4,41 +4,28 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
-  SafeAreaView,
-  Animated,
   ImageBackground,
-  Platform,
-  StatusBar,
+  Image,
+  ScrollView,
+  Alert,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { supabase } from "./supabase"; // Import your configured Supabase client
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
+import { supabase } from "./supabase";
 
 export default function Register() {
   const navigation = useNavigation();
-  const [fadeAnim] = useState(new Animated.Value(0));
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [corUri, setCorUri] = useState(null);
-  const [corName, setCorName] = useState(null); // To display file name
+  const [corName, setCorName] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Fade-in effect
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
-
-  const handleBackPress = () => {
-    navigation.navigate("Login"); // Replace "Login" with the name of your login screen
-  };
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleUploadCOR = async () => {
     try {
@@ -66,18 +53,45 @@ export default function Register() {
   };
 
   const handleSignUp = async () => {
-    if (!fullname || !email || !studentId || !username || !password || !confirmPassword || !corUri) {
-      Alert.alert("Error", "All fields are required.");
+    if (!fullname || !email || !studentId || !password || !confirmPassword || !corUri) {
+      Alert.alert("Validation Error", "All fields are required.");
       return;
     }
-
+  
+    if (!validateEmail(email)) {
+      Alert.alert("Validation Error", "Please enter a valid email address.");
+      return;
+    }
+  
+    if (password.length < 8) {
+      Alert.alert("Validation Error", "Password must be at least 8 characters long.");
+      return;
+    }
+  
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match.");
+      Alert.alert("Validation Error", "Passwords do not match.");
       return;
     }
-
+  
     try {
-      // Upload COR to Supabase storage
+      setLoading(true);
+  
+      // Step 1: Register user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+  
+      if (authError) {
+        console.error("Auth Sign-Up Error:", authError);
+        Alert.alert("Error", "Failed to sign up.");
+        setLoading(false);
+        return;
+      }
+  
+      const userId = authData.user.id;
+
+      // Step 3: Upload the COR file
       const fileName = `${studentId}_cor.pdf`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("cor_bucket")
@@ -94,230 +108,205 @@ export default function Register() {
       }
 
       const corUrl = supabase.storage.from("cor_bucket").getPublicUrl(fileName).data.publicUrl;
-
-      // Insert user data into the database
-      const { data, error } = await supabase.from("users").insert([
+  
+      // Step 2: Insert user data into the users table
+      const { error: insertError } = await supabase.from("users").insert([
         {
-          fullname,
+          id: userId,
+          full_name: fullname,
           email,
-          student_id: studentId,
-          username,
-          password, // In production, use hashed passwords
-          cor_url: corUrl,
+          student_id: parseInt(studentId, 10),
+          cor_url: corUrl, // Placeholder until the file is uploaded
         },
       ]);
-
-      if (error) {
-        console.error("Error signing up:", error);
-        Alert.alert("Error", "Failed to register. Please try again.");
-      } else {
-        Alert.alert("Success", "Registration successful!", [
-          { text: "OK", onPress: () => navigation.navigate("Login") },
-        ]);
+  
+      if (insertError) {
+        console.error("Database Insertion Error:", insertError);
+        Alert.alert("Error", "Failed to save user data.");
+        setLoading(false);
+        return;
       }
+      await supabase.auth.signOut();
+      Alert.alert("Success", "Registration successful!", [{ text: "OK", onPress: () => navigation.navigate("Login") }]);
     } catch (error) {
-      console.error("Unexpected error:", error);
+      console.error("Unexpected Error:", error);
       Alert.alert("Error", "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
     }
   };
-
+  
+  
+  
   return (
-    <ImageBackground
-      source={require("./assets/background.jpg")}
-      style={styles.background}
-    >
-      <StatusBar
-        barStyle={Platform.OS === "ios" ? "dark-content" : "light-content"}
-        backgroundColor="transparent"
-        translucent
-      />
+    <ImageBackground source={require("./assets/background.jpg")} style={styles.background}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Image source={require("./assets/logo.png")} style={styles.logo} />
+        <Text style={styles.title}>BLAZEMART</Text>
+        <Text style={styles.subtitle}>Create your account</Text>
 
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
+        <TextInput
+          style={styles.input}
+          placeholder="Full Name"
+          placeholderTextColor="#555"
+          value={fullname}
+          onChangeText={setFullname}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#555"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Student ID"
+          placeholderTextColor="#555"
+          value={studentId}
+          onChangeText={setStudentId}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#555"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          placeholderTextColor="#555"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
 
-      <SafeAreaView style={styles.safeArea}>
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-          <Text style={styles.title}>Registration Form</Text>
-          <Text style={styles.subtitle}>Please fill in the details below:</Text>
+        <TouchableOpacity style={styles.uploadButton} onPress={handleUploadCOR}>
+          <Text style={styles.uploadButtonText}>
+            {corName ? `Selected: ${corName}` : "Upload COR"}
+          </Text>
+        </TouchableOpacity>
 
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Required"
-            placeholderTextColor="#555"
-            value={fullname}
-            onChangeText={setFullname}
-          />
-
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Required"
-            placeholderTextColor="#555"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
-
-          <Text style={styles.label}>Student ID</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Required"
-            placeholderTextColor="#555"
-            value={studentId}
-            onChangeText={setStudentId}
-            keyboardType="numeric"
-          />
-
-          <Text style={styles.label}>Username</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Required"
-            placeholderTextColor="#555"
-            value={username}
-            onChangeText={setUsername}
-          />
-
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Required"
-            placeholderTextColor="#555"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Required"
-            placeholderTextColor="#555"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>COR (PDF)</Text>
-          <TouchableOpacity
-            style={[styles.uploadButton, { backgroundColor: "#4E56A0" }]}
-            onPress={handleUploadCOR}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          <LinearGradient
+            colors={["#4E56A0", "#252A55"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.buttonGradient}
           >
-            <Text style={styles.uploadButtonText}>
-              {corName ? `Selected: ${corName}` : "Upload COR"}
-            </Text>
-          </TouchableOpacity>
+            <Text style={styles.buttonText}>REGISTER</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.signUpButton, { backgroundColor: "#4E56A0" }]}
-            onPress={handleSignUp}
-          >
-            <Text style={styles.signUpButtonText}>SIGN UP</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Login")}
+          disabled={loading}
+        >
+          <Text style={styles.loginLink}>Already have an account? Login</Text>
+        </TouchableOpacity>
+        {/* <TouchableOpacity style={styles.button} onPress={handleTest}>
+  <LinearGradient
+    colors={["#4E56A0", "#252A55"]}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 0 }}
+    style={styles.buttonGradient}
+  >
+    <Text style={styles.buttonText}>Test Insert</Text>
+  </LinearGradient>
+</TouchableOpacity> */}
 
-          <TouchableOpacity onPress={handleBackPress}>
-            <Text style={styles.loginPrompt}>
-              Already have an account? <Text style={styles.loginText}>Back to login.</Text>
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </SafeAreaView>
+      </ScrollView>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  // Reuse your original styles here
   background: {
     flex: 1,
     resizeMode: "cover",
   },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "transparent",
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: "transparent",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-  },
   container: {
-    flex: 1,
-    padding: 20,
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 200,
+    height: 200,
+    marginTop: 50,
+    marginBottom: 20,
   },
   title: {
     color: "#000",
-    fontSize: 25,
-    fontWeight: "bold",
+    fontSize: 45,
+    fontWeight: "800",
     textAlign: "center",
-    marginBottom: 10,
   },
   subtitle: {
-    color: "#000",
-    fontSize: 15,
-    marginBottom: 20,
+    color: "#333",
+    fontSize: 17,
     textAlign: "center",
-  },
-  label: {
-    color: "#000",
-    fontSize: 16,
-    marginTop: 5,
-    textAlign: "left",
-    width: "70%",
-    alignSelf: "center",
+    fontWeight: "800",
+    fontStyle: "italic",
+    marginVertical: 10,
   },
   input: {
-    width: "75%",
-    height: 43,
-    backgroundColor: "#ddd",
+    width: "80%",
+    height: 45,
+    backgroundColor: "#fff",
     borderRadius: 10,
     paddingHorizontal: 15,
     fontSize: 16,
-    marginVertical: 3,
+    fontWeight: "700",
+    marginVertical: 5,
     textAlign: "center",
-    borderColor: "#4E56A0",
+    borderColor: "#7190BF",
     borderWidth: 2,
   },
   uploadButton: {
-    width: "75%",
-    height: 40,
+    width: "80%",
+    height: 45,
+    backgroundColor: "#4E56A0",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 10,
-    borderColor: "#4E56A0",
-    borderWidth: 2,
+    marginVertical: 5,
   },
   uploadButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "600",
-  },
-  signUpButton: {
-    width: "75%",
-    height: 45,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  signUpButtonText: {
-    color: "#fff",
-    fontSize: 18,
     fontWeight: "700",
   },
-  loginPrompt: {
-    marginTop: 10,
-    fontSize: 15,
-    textAlign: "center",
+  button: {
+    width: "45%",
+    height: 50,
+    borderRadius: 10,
+    overflow: "hidden",
+    marginVertical: 15,
   },
-  loginText: {
-    color: "#4E56A0",
-    fontWeight: "600",
+  buttonGradient: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontFamily: "Times New Roman",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  loginLink: {
+    color: "#4e5d94",
+    textDecorationLine: "underline",
+    fontWeight: "800",
+    marginTop: 10,
   },
 });

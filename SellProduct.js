@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,16 +10,20 @@ import {
   Alert,
   Modal,
   ImageBackground,
+  ActivityIndicator,
 } from "react-native";
 import { RadioButton } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
+import { supabase } from "./supabase";
+import { AuthContext } from "./AuthProvider";
 
 const SellProduct = ({ navigation }) => {
+  const { user, isLoading } = useContext(AuthContext); // Get user and loading state from AuthContext
   const [photos, setPhotos] = useState([]);
   const [condition, setCondition] = useState("new");
   const [category, setCategory] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [email, setEmail] = useState("");
+  const [productName, setProductName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const handleAddPhoto = async () => {
@@ -31,10 +35,39 @@ const SellProduct = ({ navigation }) => {
       });
 
       if (!result.canceled) {
-        setPhotos([...photos, result.assets[0].uri]);
+        const photo = result.assets[0];
+        const fileName = `${Date.now()}_${photo.uri.split('/').pop()}`;
+
+        try {
+          // Upload the file
+          const { data, error } = await supabase.storage
+            .from('product_bucket')
+            .upload(fileName, {
+              uri: photo.uri,
+              type: 'image/jpeg', // Adjust MIME type if needed
+              name: fileName,
+            });
+
+          if (error) throw new Error(`Upload error: ${error.message}`);
+
+          // Retrieve the public URL
+          const { data: urlData } = supabase.storage
+            .from('product_bucket')
+            .getPublicUrl(fileName);
+
+          if (!urlData.publicUrl) {
+            throw new Error('Unable to retrieve public URL.');
+          }
+
+          // Add the public URL to the photos array
+          setPhotos([...photos, urlData.publicUrl]);
+        } catch (err) {
+          console.error('Error during upload:', err.message);
+          Alert.alert('Error', 'Failed to upload photo. Please try again.');
+        }
       }
     } else {
-      Alert.alert("Maximum 10 photos allowed");
+      Alert.alert('Maximum 10 photos allowed');
     }
   };
 
@@ -43,20 +76,52 @@ const SellProduct = ({ navigation }) => {
     newPhotos.splice(index, 1);
     setPhotos(newPhotos);
   };
+  
 
-  const handleSubmit = () => {
-    if (photos.length > 0 && contactNumber && email && category) {
-      navigation.navigate("Marketplace", {
-        notification: {
-          title: "Success!",
-          description:
-            "Your product has been saved in our servers. Please wait for the approval, Thank you!",
+  const handleSubmit = async () => {
+    // Validate input fields
+    if (!productName || photos.length === 0 || !category) {
+      Alert.alert("Incomplete Information", "Please fill in all fields.");
+      return;
+    }
+  
+    try {
+      const firstPhoto = photos[0]; // Use the first photo from the photos array
+  
+      // Check if user ID is available
+      console.log("User ID being used for product submission:", user.id);
+  
+      // Insert product data into the Supabase database
+      const { error: dbError } = await supabase.from("products").insert([
+        {
+          user_id: user.id, // Match the column name in the table
+          product_name: productName, // Match column name for product name
+          product_descrip: productDescription, // Match column name for description
+          product_img: firstPhoto, // Use the first photo's public URL
+          product_cond: condition, // Use the selected condition
+          category, // Use the selected category
         },
-      });
-    } else {
-      Alert.alert("Please fill all the information");
+      ]);
+  
+      if (dbError) {
+        throw new Error(`Database insertion error: ${dbError.message}`);
+      }
+  
+      Alert.alert(
+        "Success!",
+        "Your product has been submitted successfully. Await approval!"
+      );
+      navigation.navigate("Marketplace");
+    } catch (error) {
+      console.error("Error during product submission:", error.message);
+      Alert.alert(
+        "Error",
+        error.message || "Failed to submit product. Please try again."
+      );
     }
   };
+  
+  
 
   return (
     <ImageBackground
@@ -82,13 +147,7 @@ const SellProduct = ({ navigation }) => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.sectionHeader}>
-            <Image
-              source={require("./assets/sell/product_details.png")}
-              style={styles.sectionIcon}
-            />
-            <Text style={styles.sectionTitle}>Product Details</Text>
-          </View>
+
           {/* Add Photos Section */}
           <View style={styles.photosContainer}>
             <ScrollView horizontal>
@@ -107,10 +166,7 @@ const SellProduct = ({ navigation }) => {
                 </View>
               ))}
               {photos.length < 10 && (
-                <TouchableOpacity
-                  style={styles.photoBox}
-                  onPress={handleAddPhoto}
-                >
+                <TouchableOpacity style={styles.photoBox} onPress={handleAddPhoto}>
                   <Image
                     source={require("./assets/sell/photo_add.png")}
                     style={styles.addPhotoIcon}
@@ -120,13 +176,19 @@ const SellProduct = ({ navigation }) => {
               )}
             </ScrollView>
           </View>
-
-          {/* Product Details Section */}
-          <View style={styles.section}>
-            <TextInput placeholder="Product Name" style={styles.input} />
+            {/* Product Details Section */}
+            <View style={styles.section}>
+            <TextInput
+              placeholder="Product Name"
+              style={styles.input}
+              value={productName} // Bind value to state
+              onChangeText={setProductName} // Update state on change
+            />
             <TextInput
               placeholder="Description"
               style={styles.input}
+              value={productDescription} // Bind value to state
+              onChangeText={setProductDescription} // Update state on change
               multiline
             />
           </View>
@@ -135,32 +197,16 @@ const SellProduct = ({ navigation }) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Condition</Text>
             <View style={styles.radioGroup}>
-              <RadioButton
-                value="new"
-                status={condition === "new" ? "checked" : "unchecked"}
-                onPress={() => setCondition("new")}
-              />
-              <Text style={styles.radioLabel}>New</Text>
-              <RadioButton
-                value="used - like new"
-                status={
-                  condition === "used - like new" ? "checked" : "unchecked"
-                }
-                onPress={() => setCondition("used - like new")}
-              />
-              <Text style={styles.radioLabel}>Used - Like New</Text>
-              <RadioButton
-                value="used - good"
-                status={condition === "used - good" ? "checked" : "unchecked"}
-                onPress={() => setCondition("used - good")}
-              />
-              <Text style={styles.radioLabel}>Used - Good</Text>
-              <RadioButton
-                value="used - fair"
-                status={condition === "used - fair" ? "checked" : "unchecked"}
-                onPress={() => setCondition("used - fair")}
-              />
-              <Text style={styles.radioLabel}>Used - Fair</Text>
+              {["new", "used - like new", "used - good", "used - fair"].map((cond) => (
+                <View key={cond} style={styles.radioItem}>
+                  <RadioButton
+                    value={cond}
+                    status={condition === cond ? "checked" : "unchecked"}
+                    onPress={() => setCondition(cond)}
+                  />
+                  <Text style={styles.radioLabel}>{cond.replace("-", " - ")}</Text>
+                </View>
+              ))}
             </View>
           </View>
 
@@ -174,33 +220,10 @@ const SellProduct = ({ navigation }) => {
               />
             </TouchableOpacity>
           </View>
-
-          {/* Contact Information Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Contact Information</Text>
-            <TextInput
-              placeholder="Contact Number (Required)"
-              style={styles.input}
-              keyboardType="phone-pad"
-              value={contactNumber}
-              onChangeText={setContactNumber}
-            />
-            <TextInput
-              placeholder="Email Address (Optional)"
-              style={styles.input}
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
         </ScrollView>
 
         {/* Categories Modal */}
-        <Modal
-          visible={isCategoryModalVisible}
-          transparent={true}
-          animationType="slide"
-        >
+        <Modal visible={isCategoryModalVisible} transparent={true} animationType="slide">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <ScrollView>
@@ -274,7 +297,7 @@ const styles = StyleSheet.create({
   navTitle: {
     color: "#FFF",
     fontSize: 18,
-    fontWeight: "bold",
+ fontWeight: "bold",
   },
   scrollContainer: {
     padding: 15,
@@ -347,8 +370,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  radioItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
+  },
   radioLabel: {
-    marginRight: 20,
+    marginRight: 10,
   },
   categoryIcon: {
     width: 25,
@@ -357,19 +385,18 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: "80%",
     backgroundColor: "#FFF",
-    borderRadius: 10,
     padding: 20,
+    borderRadius: 10,
+    marginHorizontal: 20,
   },
   modalItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    paddingVertical: 10,
   },
   modalItemText: {
     marginLeft: 10,

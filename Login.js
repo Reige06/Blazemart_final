@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,16 +11,17 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import { supabase } from "./supabase";
+import { AuthContext } from "./AuthProvider"; // Import the AuthContext
 
 export default function Login() {
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const moveAnim = useRef(new Animated.Value(0)).current;
-  const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const { signIn, isLoading } = useContext(AuthContext); // Use signIn and isLoading from AuthProvider
 
   useEffect(() => {
     Animated.sequence([
@@ -38,36 +39,24 @@ export default function Login() {
   }, []);
 
   const handleLogin = async () => {
-    setLoading(true);
-    setErrorMessage("");
+    setErrorMessage(""); // Clear previous errors
+    const { error } = await signIn(email, password); // Call signIn from AuthProvider
 
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username)
-        .eq("password", password);
-
-
-      if (error) {
-        setErrorMessage("Error during authentication. Please try again.");
-        console.error(error);
-      } else if (data.length === 0) {
-        setErrorMessage("Invalid username or password.");
-      } else {
-        navigation.navigate("Home");
-      }
-    } catch (err) {
-      console.error("Error:", err);
-      setErrorMessage("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+    if (error) {
+      setErrorMessage(error.message); // Display the error if login fails
+    } else {
+      navigation.navigate("Home"); // Navigate to Home if login is successful
     }
   };
 
   return (
-    <ImageBackground source={require("./assets/background.jpg")} style={styles.background}>
-      <Animated.View style={[styles.container, { transform: [{ translateY: moveAnim }] }]}>
+    <ImageBackground
+      source={require("./assets/background.jpg")}
+      style={styles.background}
+    >
+      <Animated.View
+        style={[styles.container, { transform: [{ translateY: moveAnim }] }]}
+      >
         <Image source={require("./assets/logo.png")} style={styles.logo} />
         <Text style={styles.title}>BLAZEMART</Text>
         <Text style={styles.subtitle}>
@@ -78,10 +67,12 @@ export default function Login() {
       <Animated.View style={[styles.fadeContainer, { opacity: fadeAnim }]}>
         <TextInput
           style={styles.input}
-          placeholder="Username"
+          placeholder="Email"
           placeholderTextColor="#555"
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
         <TextInput
           style={styles.input}
@@ -92,12 +83,14 @@ export default function Login() {
           onChangeText={setPassword}
         />
 
-        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
 
         <TouchableOpacity
           style={styles.button}
           onPress={handleLogin}
-          disabled={loading}
+          disabled={isLoading}
         >
           <LinearGradient
             colors={["#4E56A0", "#252A55"]}
@@ -105,11 +98,16 @@ export default function Login() {
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
           >
-            <Text style={styles.buttonText}>LOGIN</Text>
+            <Text style={styles.buttonText}>
+              {isLoading ? "Logging in..." : "LOGIN"}
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate("ForgotPass")} disabled={loading}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("ForgotPass")}
+          disabled={isLoading}
+        >
           <Text style={styles.forgotPassword}>Forgot Password?</Text>
         </TouchableOpacity>
 
@@ -124,9 +122,9 @@ export default function Login() {
         </Text>
       </Animated.View>
 
-      {loading && (
+      {isLoading && (
         <Animated.View style={[styles.loadingOverlay, { opacity: fadeAnim }]}>
-          <ActivityIndicator size="100" color="#fff" />
+          <ActivityIndicator size="large" color="#fff" />
         </Animated.View>
       )}
     </ImageBackground>

@@ -1,14 +1,8 @@
-import React, { useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  ImageBackground,
-  SafeAreaView,
-} from "react-native";
+import React, { useContext } from "react";
+import { StyleSheet, ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import { AuthProvider, AuthContext } from "./AuthProvider"; // Import AuthProvider and AuthContext
 import Login from "./Login";
 import Register from "./Register";
 import ForgotPass from "./ForgotPass";
@@ -26,7 +20,7 @@ import SellProduct from "./SellProduct";
 const Stack = createStackNavigator();
 
 function SplashScreen({ navigation }) {
-  useEffect(() => {
+  React.useEffect(() => {
     const timer = setTimeout(() => {
       navigation.navigate("Login");
     }, 2000);
@@ -35,61 +29,57 @@ function SplashScreen({ navigation }) {
   }, [navigation]);
 
   return (
-    <ImageBackground
-      source={require("./assets/background.jpg")}
-      style={styles.background}
-    >
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <Image
-            source={require("./assets/logo.png")}
-            style={styles.logoImage}
-          />
-          <Text style={styles.title}>BLAZEMART</Text>
-          <Text style={styles.subtitle}>
-            "Shop Smart, BlazeMart"{"\n"}The Trailblazers' Marketplace
-          </Text>
-          <View style={styles.footer}>
-            <Image
-              source={require("./assets/ustp.png")}
-              style={styles.footerImage}
-            />
-            <Text style={styles.footerText}>
-              USTP - CDO 2024 © All Rights Reserved
-            </Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    </ImageBackground>
+    <View style={styles.splashContainer}>
+      <ActivityIndicator size="large" color="#0000ff" />
+    </View>
   );
+}
+
+function ProtectedRoute({ children }) {
+  const { user, isLoading } = useContext(AuthContext);
+
+  if (isLoading) {
+    // Show a loading spinner while authentication state is loading
+    return (
+      <View style={styles.splashContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  // If no user is logged in, redirect to Login
+  return user ? children : <Login />;
 }
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen
-          name="Login"
-          component={Login}
-          options={{ gestureEnabled: false }}
-        />
-        <Stack.Screen name="ForgotPass" component={ForgotPass} />
-        <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="VerifyPass" component={VerifyPass} />
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="CreatePass" component={CreatePass} />
-        <Stack.Screen name="Marketplace" component={Marketplace} />
-        <Stack.Screen name="ProfilePage" component={ProfilePage} />
-        <Stack.Screen name="Admin_Login" component={AdminLogin} />
-        <Stack.Screen name="Admin_Home" component={AdminHome} />
-        <Stack.Screen name="MySavedPage" component={MySavedPage} />
-        <Stack.Screen name="MessagePage" component={MessagePage} />
-        <Stack.Screen name="SellProduct" component={SellProduct} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {/* Public Screens */}
+          <Stack.Screen name="Splash" component={SplashScreen} />
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="ForgotPass" component={ForgotPass} />
+          <Stack.Screen name="Register" component={Register} />
+
+          {/* Protected Screens */}
+          <Stack.Screen name="Home" component={Home} />
+          <Stack.Screen name="VerifyPass" component={VerifyPass} />
+          <Stack.Screen name="CreatePass" component={CreatePass} />
+          <Stack.Screen name="Marketplace" component={Marketplace} />
+          <Stack.Screen name="ProfilePage" component={ProfilePage} />
+          <Stack.Screen name="Admin_Login" component={AdminLogin} />
+          <Stack.Screen name="Admin_Home" component={AdminHome} />
+          <Stack.Screen name="MySavedPage" component={MySavedPage} />
+          <Stack.Screen name="MessagePage" component={MessagePage} />
+          <Stack.Screen name="SellProduct" component={SellProduct} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   background: {
@@ -146,5 +136,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 0,
     marginBottom: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
