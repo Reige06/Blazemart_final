@@ -39,13 +39,30 @@ export default function Login() {
   }, []);
 
   const handleLogin = async () => {
-    setErrorMessage(""); // Clear previous errors
-    const { error } = await signIn(email, password); // Call signIn from AuthProvider
+    setLoading(true);
+    setErrorMessage("");
 
-    if (error) {
-      setErrorMessage(error.message); // Display the error if login fails
-    } else {
-      navigation.navigate("Home"); // Navigate to Home if login is successful
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password);
+
+
+      if (error) {
+        setErrorMessage("Error during authentication. Please try again.");
+        console.error(error);
+      } else if (data.length === 0) {
+        setErrorMessage("Invalid username or password.");
+      } else {
+        navigation.navigate("Home");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,7 +107,7 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={handleLogin}
-          disabled={isLoading}
+          disabled={loading}
         >
           <LinearGradient
             colors={["#4E56A0", "#252A55"]}
@@ -104,10 +121,7 @@ export default function Login() {
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ForgotPass")}
-          disabled={isLoading}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate("ForgotPass")} disabled={loading}>
           <Text style={styles.forgotPassword}>Forgot Password?</Text>
         </TouchableOpacity>
 

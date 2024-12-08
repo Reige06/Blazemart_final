@@ -9,12 +9,31 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  Modal,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 export default function Marketplace() {
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState("For You");
+  const [activeTab, setActiveTab] = useState("Sell");
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const categories = [
+    "Electronics",
+    "Furniture",
+    "Food",
+    "Arts and Crafts",
+    "Home",
+    "Education",
+    "Health and Beauty",
+    "Clothing",
+    "Toys and Games",
+    "Sports",
+    "Jewelry",
+    "Miscellaneous",
+  ];
 
   const productItems = Array.from({ length: 30 }, (_, i) => ({
     id: i.toString(),
@@ -27,7 +46,15 @@ export default function Marketplace() {
     setActiveTab(tab);
     if (tab === "Sell") {
       navigation.navigate("SellProduct");
+    } else if (tab === "Categories") {
+      setCategoryModalVisible(true);
     }
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setCategoryModalVisible(false);
+    navigation.navigate("CategoryPage", { category });
   };
 
   const renderItem = ({ item }) => (
@@ -103,7 +130,7 @@ export default function Marketplace() {
 
           {/* Tabs */}
           <View style={styles.tabs}>
-            {["Sell", "For You", "Categories"].map((tab) => (
+            {["Sell", "Categories"].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 onPress={() => handleTabPress(tab)}
@@ -150,7 +177,10 @@ export default function Marketplace() {
                 style={styles.icon}
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.navCircle}>
+            <TouchableOpacity
+              style={styles.navCircle}
+              onPress={() => navigation.navigate("Notification")}
+            >
               <Image
                 source={require("./assets/navigation/notifications.png")}
                 style={styles.icon}
@@ -168,6 +198,31 @@ export default function Marketplace() {
           </View>
         </ImageBackground>
       </View>
+
+      {/* Category Picker Modal */}
+      <Modal
+        visible={isCategoryModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setCategoryModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select a Product Category</Text>
+            <ScrollView>
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  style={styles.radioItem}
+                  onPress={() => handleCategorySelect(category)}
+                >
+                  <Text style={styles.radioLabel}>{category}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -355,5 +410,32 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     resizeMode: "contain",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  radioItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  radioLabel: {
+    marginLeft: 10,
+    fontSize: 16,
   },
 });

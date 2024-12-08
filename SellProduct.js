@@ -76,48 +76,18 @@ const SellProduct = ({ navigation }) => {
     newPhotos.splice(index, 1);
     setPhotos(newPhotos);
   };
-  
 
-  const handleSubmit = async () => {
-    // Validate input fields
-    if (!productName || photos.length === 0 || !category) {
-      Alert.alert("Incomplete Information", "Please fill in all fields.");
-      return;
-    }
-  
-    try {
-      const firstPhoto = photos[0]; // Use the first photo from the photos array
-  
-      // Check if user ID is available
-      console.log("User ID being used for product submission:", user.id);
-  
-      // Insert product data into the Supabase database
-      const { error: dbError } = await supabase.from("products").insert([
-        {
-          user_id: user.id, // Match the column name in the table
-          product_name: productName, // Match column name for product name
-          product_descrip: productDescription, // Match column name for description
-          product_img: firstPhoto, // Use the first photo's public URL
-          product_cond: condition, // Use the selected condition
-          category, // Use the selected category
+  const handleSubmit = () => {
+    if (photos.length > 0 && contactNumber && email && category) {
+      navigation.navigate("Marketplace", {
+        notification: {
+          title: "Success!",
+          description:
+            "Your product has been saved in our servers. Please wait for the approval, Thank you!",
         },
-      ]);
-  
-      if (dbError) {
-        throw new Error(`Database insertion error: ${dbError.message}`);
-      }
-  
-      Alert.alert(
-        "Success!",
-        "Your product has been submitted successfully. Await approval!"
-      );
-      navigation.navigate("Marketplace");
-    } catch (error) {
-      console.error("Error during product submission:", error.message);
-      Alert.alert(
-        "Error",
-        error.message || "Failed to submit product. Please try again."
-      );
+      });
+    } else {
+      Alert.alert("Please fill all the information");
     }
   };
   
@@ -175,6 +145,11 @@ const SellProduct = ({ navigation }) => {
                 </TouchableOpacity>
               )}
             </ScrollView>
+            <TouchableOpacity onPress={handleAddPhoto}>
+              <Text style={styles.photoCountText}>
+                {`${photos.length}/10 Select a Photo of your Product.\nThe first photo is your main photo of your product.`}
+              </Text>
+            </TouchableOpacity>
           </View>
             {/* Product Details Section */}
             <View style={styles.section}>
@@ -197,23 +172,45 @@ const SellProduct = ({ navigation }) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Condition</Text>
             <View style={styles.radioGroup}>
-              {["new", "used - like new", "used - good", "used - fair"].map((cond) => (
-                <View key={cond} style={styles.radioItem}>
-                  <RadioButton
-                    value={cond}
-                    status={condition === cond ? "checked" : "unchecked"}
-                    onPress={() => setCondition(cond)}
-                  />
-                  <Text style={styles.radioLabel}>{cond.replace("-", " - ")}</Text>
-                </View>
-              ))}
+              <RadioButton
+                value="new"
+                status={condition === "new" ? "checked" : "unchecked"}
+                onPress={() => setCondition("new")}
+              />
+              <Text style={styles.radioLabel}>New</Text>
+              <RadioButton
+                value="used - like new"
+                status={
+                  condition === "used - like new" ? "checked" : "unchecked"
+                }
+                onPress={() => setCondition("used - like new")}
+              />
+              <Text style={styles.radioLabel}>Used - Like New</Text>
+              <RadioButton
+                value="used - good"
+                status={condition === "used - good" ? "checked" : "unchecked"}
+                onPress={() => setCondition("used - good")}
+              />
+              <Text style={styles.radioLabel}>Used - Good</Text>
+              <RadioButton
+                value="used - fair"
+                status={condition === "used - fair" ? "checked" : "unchecked"}
+                onPress={() => setCondition("used - fair")}
+              />
+              <Text style={styles.radioLabel}>Used - Fair</Text>
             </View>
           </View>
 
           {/* Categories Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Categories</Text>
-            <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
+            <TouchableOpacity
+              style={styles.categoryContainer}
+              onPress={() => setCategoryModalVisible(true)}
+            >
+              <Text style={styles.categoryText}>
+                {category || "Select Category"}
+              </Text>
               <Image
                 source={require("./assets/sell/categories_popup_scroll.png")}
                 style={styles.categoryIcon}
@@ -226,8 +223,10 @@ const SellProduct = ({ navigation }) => {
         <Modal visible={isCategoryModalVisible} transparent={true} animationType="slide">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select a Product Category</Text>
               <ScrollView>
                 {[
+                  "Pick a Category",
                   "Electronics",
                   "Furniture",
                   "Food",
@@ -303,14 +302,14 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   photosContainer: {
-    flexDirection: "row",
     marginBottom: 20,
   },
   photoBox: {
-    width: 393,
-    height: 395,
+    width: 390,
+    height: 390,
     backgroundColor: "#FFF",
-    borderWidth: 4,
+    borderWidth: 7,
+    borderRadius: 10,
     borderColor: "#4E56A0",
     justifyContent: "center",
     alignItems: "center",
@@ -319,6 +318,7 @@ const styles = StyleSheet.create({
   photo: {
     width: "100%",
     height: "100%",
+    borderRadius: 10,
   },
   addPhotoIcon: {
     width: 90,
@@ -341,6 +341,14 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
   },
+  photoCountText: {
+    fontSize: 13,
+    color: "#4E56A0",
+    fontWeight: "bold",
+    marginTop: 10,
+    textAlign: "left",
+    marginLeft: 5,
+  },
   section: {
     marginBottom: 20,
   },
@@ -350,8 +358,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionIcon: {
-    width: 25,
-    height: 25,
+    width: 40,
+    height: 40,
     marginRight: 10,
   },
   sectionTitle: {
@@ -366,9 +374,38 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  radioGroup: {
+  conditionContainer: {
+    backgroundColor: "#FFF",
+    borderWidth: 4,
+    borderColor: "#4E56A0",
+    borderRadius: 5,
+    padding: 10,
+  },
+  conditionHeader: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 10,
+  },
+  conditionIcon: {
+    width: 25,
+    height: 25,
+    marginRight: 10,
+  },
+  conditionTitle: {
+    color: "#4E56A0",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  radioGroup: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  radioItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+    marginBottom: 10,
   },
   radioItem: {
     flexDirection: "row",
@@ -376,7 +413,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   radioLabel: {
-    marginRight: 10,
+    marginRight: 20,
   },
   categoryIcon: {
     width: 25,
@@ -392,6 +429,12 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     marginHorizontal: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
   },
   modalItem: {
     flexDirection: "row",

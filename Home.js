@@ -143,7 +143,10 @@ export default function Home() {
             style={styles.icon}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navCircle}>
+        <TouchableOpacity
+          style={styles.navCircle}
+          onPress={() => navigation.navigate("Notification")}
+        >
           <Image
             source={require("./assets/navigation/notifications.png")}
             style={styles.icon}

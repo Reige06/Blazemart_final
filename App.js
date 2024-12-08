@@ -16,6 +16,8 @@ import MySavedPage from "./MySavedPage";
 import Marketplace from "./Marketplace";
 import MessagePage from "./MessagePage";
 import SellProduct from "./SellProduct";
+import CategoryPage from "./CategoryPage";
+import Notification from "./Notification";
 
 const Stack = createStackNavigator();
 
@@ -53,29 +55,28 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {/* Public Screens */}
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="ForgotPass" component={ForgotPass} />
-          <Stack.Screen name="Register" component={Register} />
-
-          {/* Protected Screens */}
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="VerifyPass" component={VerifyPass} />
-          <Stack.Screen name="CreatePass" component={CreatePass} />
-          <Stack.Screen name="Marketplace" component={Marketplace} />
-          <Stack.Screen name="ProfilePage" component={ProfilePage} />
-          <Stack.Screen name="Admin_Login" component={AdminLogin} />
-          <Stack.Screen name="Admin_Home" component={AdminHome} />
-          <Stack.Screen name="MySavedPage" component={MySavedPage} />
-          <Stack.Screen name="MessagePage" component={MessagePage} />
-          <Stack.Screen name="SellProduct" component={SellProduct} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </AuthProvider>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{ gestureEnabled: false }}
+        />
+        <Stack.Screen name="ForgotPass" component={ForgotPass} />
+        <Stack.Screen name="Register" component={Register} />
+        <Stack.Screen name="VerifyPass" component={VerifyPass} />
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="CreatePass" component={CreatePass} />
+        <Stack.Screen name="Marketplace" component={Marketplace} />
+        <Stack.Screen name="ProfilePage" component={ProfilePage} />
+        <Stack.Screen name="Admin_Login" component={AdminLogin} />
+        <Stack.Screen name="Admin_Home" component={AdminHome} />
+        <Stack.Screen name="MySavedPage" component={MySavedPage} />
+        <Stack.Screen name="MessagePage" component={MessagePage} />
+        <Stack.Screen name="SellProduct" component={SellProduct} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
