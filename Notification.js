@@ -36,40 +36,6 @@ export default function Notification() {
           style={styles.background}
         >
           {/* Top Navigation */}
-          <View style={styles.topContainer}>
-            <View style={{ flex: 1, position: "relative" }}>
-              <View style={styles.searchIconContainer}>
-                <Image
-                  source={require("./assets/home/search.png")}
-                  style={styles.searchIcon}
-                />
-              </View>
-              <TextInput
-                style={styles.searchBar}
-                placeholder="Search Notifications..."
-                placeholderTextColor="#000"
-              />
-            </View>
-            <View style={styles.topIcons}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("MySavedPage")}
-              >
-                <Image
-                  source={require("./assets/marketplace/heart.png")}
-                  style={styles.topIcon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("MessagePage")}
-              >
-                <Image
-                  source={require("./assets/marketplace/message.png")}
-                  style={styles.topIcon}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Notification Title Row */}
           <View style={styles.titleRow}>
             <View style={styles.cartAndTitle}>

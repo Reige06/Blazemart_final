@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -13,12 +13,13 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-
+import { supabase } from "./supabase";
 export default function Marketplace() {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("Sell");
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [productItems, setProductItems] = useState([]);
 
   const categories = [
     "Electronics",
@@ -35,12 +36,34 @@ export default function Marketplace() {
     "Miscellaneous",
   ];
 
-  const productItems = Array.from({ length: 30 }, (_, i) => ({
-    id: i.toString(),
-    title: `Product ${i + 1}`,
-    price: `₱${(i + 1) * 100}`,
-    image: require("./assets/marketplace/sample_product.jpg"), // Replace with actual images
-  }));
+  // Fetch products from the database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, product_name, product_img, price");
+    
+        if (error) {
+          console.error("Error fetching products:", error.message);
+          return;
+        }
+    
+        const productsWithPublicURLs = data.map((product) => ({
+          ...product,
+          product_img: product.product_img || "https://via.placeholder.com/150", // Use placeholder if product_img is null or undefined
+        }));
+    
+        console.log("Fetched products with URLs:", productsWithPublicURLs);
+        setProductItems(productsWithPublicURLs); // Set state or handle the data as needed
+      } catch (err) {
+        console.error("Error fetching products:", err.message);
+      }
+    };
+    
+    
+    fetchProducts();
+  }, []);
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -58,14 +81,24 @@ export default function Marketplace() {
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.productContainer}>
-      <Image source={item.image} style={styles.productImage} />
-      <Text style={styles.productTitle}>{item.title}</Text>
-      <Text style={styles.productPrice}>{item.price}</Text>
+    <TouchableOpacity
+      style={styles.productContainer}
+      onPress={() =>
+        navigation.navigate("ProductSelectedHome", {
+          productId: item.id, // Pass only the product ID
+        })
+      }
+    >
+      <Image
+        source={{ uri: item.product_img }}
+        style={styles.productImage}
+      />
+      <Text style={styles.productTitle}>{item.product_name}</Text>
+      <Text style={styles.productPrice}>₱{item.price}</Text>
     </TouchableOpacity>
   );
 
-  return (
+  return (  
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundContainer}>
         <ImageBackground
@@ -155,7 +188,7 @@ export default function Marketplace() {
           <FlatList
             data={productItems}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             numColumns={2}
             contentContainerStyle={styles.productList}
           />
@@ -366,9 +399,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   productImage: {
-    width: "100%",
-    height: 150,
+    width: '100%',
+    height: 200, // Adjust height as needed for larger images
     borderRadius: 10,
+    resizeMode: 'contain', // or 'contain' if you want the whole image to fit inside the container
   },
   productTitle: {
     marginTop: 5,

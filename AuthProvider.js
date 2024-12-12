@@ -8,14 +8,13 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Listen for authentication state changes
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        setUser(session.user);
-        console.log("User logged in:", session.user.id);
+        console.log("Session user:", session.user); // Log the full user object
+        setUser(session.user); // This should include the 'id'
       } else {
-        setUser(null);
         console.log("No user is logged in.");
+        setUser(null);
       }
       setIsLoading(false);
     });
@@ -27,6 +26,7 @@ export const AuthProvider = ({ children }) => {
         if (error) {
           console.error("Error fetching session:", error.message);
         } else if (session) {
+          console.log("Initial session user:", session.user); // Log the full user object
           setUser(session.user);
         }
       } catch (err) {

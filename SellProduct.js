@@ -10,7 +10,6 @@ import {
   Alert,
   Modal,
   ImageBackground,
-  ActivityIndicator,
 } from "react-native";
 import { RadioButton } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
@@ -25,6 +24,8 @@ const SellProduct = ({ navigation }) => {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [price, setPrice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddPhoto = async () => {
     if (photos.length < 10) {
@@ -76,18 +77,58 @@ const SellProduct = ({ navigation }) => {
     newPhotos.splice(index, 1);
     setPhotos(newPhotos);
   };
+  
 
-  const handleSubmit = () => {
-    if (photos.length > 0 && contactNumber && email && category) {
-      navigation.navigate("Marketplace", {
-        notification: {
-          title: "Success!",
-          description:
-            "Your product has been saved in our servers. Please wait for the approval, Thank you!",
+  const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double submission
+    setIsSubmitting(true); // Set submitting state
+  
+    // Validate input fields
+    if (!productName || photos.length === 0 || !category || !price) {
+      Alert.alert("Incomplete Information", "Please fill in all fields.");
+      setIsSubmitting(false); // Reset submitting state
+      return;
+    }
+    if (isNaN(price) || parseFloat(price) <= 0) {
+      Alert.alert("Invalid Price", "Please enter a valid positive number.");
+      setIsSubmitting(false); // Reset submitting state
+      return;
+    }
+  
+    try {
+      const firstPhoto = photos[0]; // Use the first photo from the photos array
+      console.log("User ID being used for product submission:", user.id);
+  
+      // Insert product data into the Supabase database
+      const { error: dbError } = await supabase.from("products").insert([
+        {
+          user_id: user.id,
+          product_name: productName,
+          product_descrip: productDescription,
+          product_img: firstPhoto,
+          product_cond: condition,
+          category,
+          price: parseFloat(price),
         },
-      });
-    } else {
-      Alert.alert("Please fill all the information");
+      ]);
+  
+      if (dbError) {
+        throw new Error(`Database insertion error: ${dbError.message}`);
+      }
+  
+      Alert.alert(
+        "Success!",
+        "Your product has been submitted successfully. Await approval!"
+      );
+      navigation.navigate("Marketplace");
+    } catch (error) {
+      console.error("Error during product submission:", error.message);
+      Alert.alert(
+        "Error",
+        error.message || "Failed to submit product. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false); // Reset submitting state
     }
   };
   
@@ -108,16 +149,27 @@ const SellProduct = ({ navigation }) => {
             />
           </TouchableOpacity>
           <Text style={styles.navTitle}>Sell a Product</Text>
-          <TouchableOpacity onPress={handleSubmit}>
+          <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
             <Image
               source={require("./assets/sell/check.png")}
-              style={styles.navIcon}
+              style={[
+                styles.navIcon,
+                { opacity: isSubmitting ? 0.5 : 1 }, // Visual feedback
+              ]}
             />
           </TouchableOpacity>
         </View>
-
+  
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-
+          {/* Section Header */}
+          <View style={styles.sectionHeader}>
+            <Image
+              source={require("./assets/sell/product_details.png")}
+              style={styles.sectionIcon}
+            />
+            <Text style={styles.sectionTitle}>Product Details</Text>
+          </View>
+  
           {/* Add Photos Section */}
           <View style={styles.photosContainer}>
             <ScrollView horizontal>
@@ -136,7 +188,10 @@ const SellProduct = ({ navigation }) => {
                 </View>
               ))}
               {photos.length < 10 && (
-                <TouchableOpacity style={styles.photoBox} onPress={handleAddPhoto}>
+                <TouchableOpacity
+                  style={styles.photoBox}
+                  onPress={handleAddPhoto}
+                >
                   <Image
                     source={require("./assets/sell/photo_add.png")}
                     style={styles.addPhotoIcon}
@@ -151,56 +206,60 @@ const SellProduct = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
           </View>
-            {/* Product Details Section */}
-            <View style={styles.section}>
+  
+          {/* Product Details Section */}
+          <View style={styles.section}>
             <TextInput
               placeholder="Product Name"
               style={styles.input}
-              value={productName} // Bind value to state
-              onChangeText={setProductName} // Update state on change
+              value={productName}
+              onChangeText={setProductName}
             />
             <TextInput
               placeholder="Description"
               style={styles.input}
-              value={productDescription} // Bind value to state
-              onChangeText={setProductDescription} // Update state on change
+              value={productDescription}
+              onChangeText={setProductDescription}
               multiline
             />
+            <TextInput
+              placeholder="Price"
+              style={styles.input}
+              keyboardType="numeric"
+              value={price}
+              onChangeText={setPrice}
+            />
           </View>
-
+  
           {/* Condition Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Condition</Text>
-            <View style={styles.radioGroup}>
-              <RadioButton
-                value="new"
-                status={condition === "new" ? "checked" : "unchecked"}
-                onPress={() => setCondition("new")}
-              />
-              <Text style={styles.radioLabel}>New</Text>
-              <RadioButton
-                value="used - like new"
-                status={
-                  condition === "used - like new" ? "checked" : "unchecked"
-                }
-                onPress={() => setCondition("used - like new")}
-              />
-              <Text style={styles.radioLabel}>Used - Like New</Text>
-              <RadioButton
-                value="used - good"
-                status={condition === "used - good" ? "checked" : "unchecked"}
-                onPress={() => setCondition("used - good")}
-              />
-              <Text style={styles.radioLabel}>Used - Good</Text>
-              <RadioButton
-                value="used - fair"
-                status={condition === "used - fair" ? "checked" : "unchecked"}
-                onPress={() => setCondition("used - fair")}
-              />
-              <Text style={styles.radioLabel}>Used - Fair</Text>
+            <View style={styles.conditionContainer}>
+              <View style={styles.conditionHeader}>
+                <Image
+                  source={require("./assets/sell/condition.png")}
+                  style={styles.conditionIcon}
+                />
+                <Text style={styles.conditionTitle}>Condition</Text>
+              </View>
+              <View style={styles.radioGroup}>
+                {["new", "used - like new", "used - good", "used - fair"].map(
+                  (cond) => (
+                    <View key={cond} style={styles.radioItem}>
+                      <RadioButton
+                        value={cond}
+                        status={condition === cond ? "checked" : "unchecked"}
+                        onPress={() => setCondition(cond)}
+                      />
+                      <Text style={styles.radioLabel}>
+                        {cond.replace("-", " - ")}
+                      </Text>
+                    </View>
+                  )
+                )}
+              </View>
             </View>
           </View>
-
+  
           {/* Categories Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Categories</Text>
@@ -218,15 +277,18 @@ const SellProduct = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </ScrollView>
-
+  
         {/* Categories Modal */}
-        <Modal visible={isCategoryModalVisible} transparent={true} animationType="slide">
+        <Modal
+          visible={isCategoryModalVisible}
+          transparent={true}
+          animationType="slide"
+        >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Select a Product Category</Text>
               <ScrollView>
                 {[
-                  "Pick a Category",
                   "Electronics",
                   "Furniture",
                   "Food",
@@ -267,6 +329,7 @@ const SellProduct = ({ navigation }) => {
       </View>
     </ImageBackground>
   );
+  
 };
 
 export default SellProduct;
@@ -296,7 +359,7 @@ const styles = StyleSheet.create({
   navTitle: {
     color: "#FFF",
     fontSize: 18,
- fontWeight: "bold",
+    fontWeight: "bold",
   },
   scrollContainer: {
     padding: 15,
@@ -407,13 +470,23 @@ const styles = StyleSheet.create({
     marginRight: 20,
     marginBottom: 10,
   },
-  radioItem: {
+  radioLabel: {
+    marginLeft: 5,
+  },
+  categoryContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 10,
+    backgroundColor: "#FFF",
+    borderWidth: 3,
+    borderColor: "#4E56A0",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
   },
-  radioLabel: {
-    marginRight: 20,
+  categoryText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#4E56A0",
   },
   categoryIcon: {
     width: 25,
@@ -422,13 +495,14 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
+    width: "80%",
     backgroundColor: "#FFF",
-    padding: 20,
     borderRadius: 10,
-    marginHorizontal: 20,
+    padding: 20,
   },
   modalTitle: {
     fontSize: 18,
@@ -439,7 +513,7 @@ const styles = StyleSheet.create({
   modalItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    marginBottom: 10,
   },
   modalItemText: {
     marginLeft: 10,

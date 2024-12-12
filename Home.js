@@ -84,14 +84,22 @@ export default function Home() {
                 style={styles.scrollContainer}
               >
                 {productItems.map((item) => (
-                  <View key={item.id} style={styles.productContainer}>
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.productContainer}
+                    onPress={() =>
+                      navigation.navigate("ProductSelectedHome", {
+                        product: item,
+                      })
+                    }
+                  >
                     <Image
                       source={require("./assets/home/product.png")}
                       style={styles.productImage}
                     />
                     <Text style={styles.productTitle}>{item.title}</Text>
                     <Text style={styles.productPrice}>{item.price}</Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
@@ -228,6 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   scrollViewContent: {
+    flexGrow: 1,
     paddingBottom: 90, // To avoid overlap with bottom navigation
   },
   sectionContainer: {

@@ -127,7 +127,7 @@ export default function Register() {
         return;
       }
       await supabase.auth.signOut();
-      Alert.alert("Success", "Registration successful!", [{ text: "OK", onPress: () => navigation.navigate("Login") }]);
+      Alert.alert("Registration successful!", "Check email for verification", [{ text: "OK", onPress: () => navigation.navigate("Login") }]);
     } catch (error) {
       console.error("Unexpected Error:", error);
       Alert.alert("Error", "An unexpected error occurred.");

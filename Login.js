@@ -11,7 +11,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import { AuthContext } from "./AuthProvider"; // Import the AuthContext
+import { AuthContext } from "./AuthProvider"; 
 
 export default function Login() {
   const navigation = useNavigation();
@@ -21,7 +21,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { signIn, isLoading } = useContext(AuthContext); // Use signIn and isLoading from AuthProvider
+  const { signIn, isLoading } = useContext(AuthContext); 
 
   useEffect(() => {
     Animated.sequence([
@@ -38,31 +38,16 @@ export default function Login() {
     ]).start();
   }, []);
 
+  // Call signIn from AuthProvider
   const handleLogin = async () => {
-    setLoading(true);
-    setErrorMessage("");
+    setErrorMessage(""); 
+    const { error } = await signIn(email, password); 
 
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username)
-        .eq("password", password);
-
-
-      if (error) {
-        setErrorMessage("Error during authentication. Please try again.");
-        console.error(error);
-      } else if (data.length === 0) {
-        setErrorMessage("Invalid username or password.");
-      } else {
-        navigation.navigate("Home");
-      }
-    } catch (err) {
-      console.error("Error:", err);
-      setErrorMessage("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+    // Display the error if login fails and navigate to Home if login is successful
+    if (error) {
+      setErrorMessage(error.message);
+    } else {
+      navigation.navigate("Home"); 
     }
   };
 
@@ -107,7 +92,7 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={handleLogin}
-          disabled={loading}
+          disabled={isLoading}
         >
           <LinearGradient
             colors={["#4E56A0", "#252A55"]}
@@ -116,12 +101,15 @@ export default function Login() {
             style={styles.buttonGradient}
           >
             <Text style={styles.buttonText}>
-              {isLoading ? "Logging in..." : "LOGIN"}
+              {isLoading ? "Logging in" : "LOGIN"}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate("ForgotPass")} disabled={loading}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("ForgotPass")}
+          disabled={isLoading}
+        >
           <Text style={styles.forgotPassword}>Forgot Password?</Text>
         </TouchableOpacity>
 
@@ -220,7 +208,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontFamily: "Times New Roman",
-    fontSize: 35,
+    fontSize: 30,
     fontWeight: "bold",
   },
   registerText: {
@@ -244,16 +232,16 @@ const styles = StyleSheet.create({
   },
 
   adminButton: {
-    width: 50, // Adjust based on desired size
+    width: 50, 
     height: 50,
     backgroundColor: "#4E56A0",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 5,
-    marginTop: 20, // Add spacing after the "Create your Account Here" button
+    marginTop: 20, 
   },
   adminIcon: {
-    width: 30, // Adjust to fit icon size
+    width: 30, 
     height: 30,
   },
 });

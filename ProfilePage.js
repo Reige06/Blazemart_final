@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import {
   SafeAreaView,
   View,
@@ -11,36 +11,85 @@ import {
   Animated,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { supabase } from "./supabase";
+
 
 export default function ProfilePage() {
+  
   const navigation = useNavigation();
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [fullName, setFullName] = useState("Loading...");
+
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get the current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError.message);
+          return;
+        }
+  
+        if (!session || !session.user) {
+          console.error("No user is logged in.");
+          return;
+        }
+  
+        const userId = session.user.id; // Get the user's ID
+        console.log("Current User ID:", userId); // Debugging
+  
+        // Fetch the user's full_name from the users table
+        const { data, error } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', userId)
+          .single();
+  
+        if (error) {
+          console.error("Error fetching user data:", error.message);
+        } else {
+          setFullName(data.full_name || "Unnamed User");
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err.message);
+      }
+    };
+  
+    fetchUserData();
+  }, []);
+  
 
   const handleLogout = () => {
     setShowModal(true);
   };
 
-  const confirmLogout = () => {
-    setShowModal(false);
-    setLoading(true);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start(() => {
-      setTimeout(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }).start(() => {
-          setLoading(false);
-          navigation.navigate("Login");
-        });
-      }, 3000);
-    });
+  const confirmLogout = async () => {
+    try {
+      setShowModal(false);
+      setLoading(true);
+  
+      // End the user's session with Supabase
+      const { error } = await supabase.auth.signOut();
+  
+      if (error) {
+        console.error("Error during logout:", error.message);
+        return;
+      }
+  
+      // Navigate back to the login page
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }], // Ensure login is the only route in the stack
+      });
+    } catch (err) {
+      console.error("Unexpected error during logout:", err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,13 +128,15 @@ export default function ProfilePage() {
               source={require("./assets/profile/profile_icon.png")}
               style={styles.profileImage}
             />
-            <Text style={styles.profileName}>First Name Last Name</Text>
+            <Text style={styles.profileName}>{fullName}</Text>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionContainer}>
             <View style={styles.background_for_actionContainer}>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity style={styles.actionButton}
+              onPress={() => navigation.navigate("MyProfile")}
+              >
                 <View style={styles.iconContainer}>
                   <Image
                     source={require("./assets/profile/profile_icon.png")}
@@ -179,7 +230,10 @@ export default function ProfilePage() {
             style={styles.icon}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navCircle}>
+        <TouchableOpacity 
+        style={styles.navCircle}
+        onPress={() => navigation.navigate("Notification")}
+        >
           <Image
             source={require("./assets/navigation/notifications.png")}
             style={styles.icon}
@@ -222,10 +276,10 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   logoText: {
-    fontSize: 24, // Adjust the size to match the logo height visually
+    fontSize: 20, // Adjust the size to match the logo height visually
     fontWeight: "bold", // Optional styling for emphasis
     color: "#201B51", // Set a color that matches your theme
-    right: 30,
+    right: 20,
     bottom: 5,
     height: 50, // Same height as the logo
     lineHeight: 50, // Center the text vertically within its container
