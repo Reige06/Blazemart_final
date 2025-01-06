@@ -1,32 +1,31 @@
 import React, { createContext, useState, useEffect } from "react";
-import { supabase } from "./supabase"; // Import your Supabase client
+import { supabase } from "./supabase";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        console.log("Session user:", session.user); // Log the full user object
-        setUser(session.user); // This should include the 'id'
+        console.log("Session user:", session.user);
+        setUser(session.user);
       } else {
         console.log("No user is logged in.");
         setUser(null);
       }
       setIsLoading(false);
     });
-  
-    // Fetch the initial session asynchronously
+
     const fetchInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Error fetching session:", error.message);
         } else if (session) {
-          console.log("Initial session user:", session.user); // Log the full user object
+          console.log("Initial session user:", session.user);
           setUser(session.user);
         }
       } catch (err) {
@@ -35,18 +34,14 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
       }
     };
-  
+
     fetchInitialSession();
-  
-    // Cleanup the subscription properly
+
     return () => {
-      if (subscription) {
-        subscription.unsubscribe?.(); // Safely call unsubscribe if it exists
-      }
+      subscription?.unsubscribe?.();
     };
   }, []);
 
-  // Helper function to log in
   const signIn = async (email, password) => {
     try {
       setIsLoading(true);
@@ -68,7 +63,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Helper function to log out
   const signOut = async () => {
     try {
       setIsLoading(true);
@@ -97,3 +91,7 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// Named and Default Exports
+export { AuthProvider }; 
+export default AuthProvider; 

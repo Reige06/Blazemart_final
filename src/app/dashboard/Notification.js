@@ -32,7 +32,7 @@ export default function Notification() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundContainer}>
         <ImageBackground
-          source={require("./assets/background.jpg")}
+          source={require("../../assets/background.jpg")}
           style={styles.background}
         >
           {/* Top Navigation */}
@@ -41,7 +41,7 @@ export default function Notification() {
             <View style={styles.cartAndTitle}>
               <View style={styles.cartContainer}>
                 <Image
-                  source={require("./assets/marketplace/cart.png")}
+                  source={require("../../assets/marketplace/cart.png")}
                   style={styles.cartIcon}
                 />
               </View>
@@ -50,7 +50,7 @@ export default function Notification() {
             <TouchableOpacity>
               <View style={styles.profileContainer}>
                 <Image
-                  source={require("./assets/marketplace/profile_icon.png")}
+                  source={require("../../assets/marketplace/profile_icon.png")}
                   style={styles.profileIcon}
                 />
               </View>
@@ -69,10 +69,10 @@ export default function Notification() {
           <View style={styles.bottomNavigation}>
             <TouchableOpacity
               style={styles.navCircle}
-              onPress={() => navigation.navigate("Home")}
+              onPress={() => navigation.navigate("Homepage")}
             >
               <Image
-                source={require("./assets/navigation/home.png")}
+                source={require("../../assets/navigation/home.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>
@@ -81,22 +81,22 @@ export default function Notification() {
               onPress={() => navigation.navigate("Marketplace")}
             >
               <Image
-                source={require("./assets/navigation/marketplace.png")}
+                source={require("../../assets/navigation/marketplace.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>
             <TouchableOpacity style={styles.marketplace_navCircle}>
               <Image
-                source={require("./assets/navigation/notifications.png")}
+                source={require("../../assets/navigation/notifications.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.navCircle}
-              onPress={() => navigation.navigate("ProfilePage")}
+              onPress={() => navigation.navigate("Settings")}
             >
               <Image
-                source={require("./assets/navigation/profile.png")}
+                source={require("../../assets/navigation/profile.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>

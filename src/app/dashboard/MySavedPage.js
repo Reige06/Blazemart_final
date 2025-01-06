@@ -63,7 +63,7 @@ const MySavedPage = () => {
       </View>
       <TouchableOpacity style={styles.messageButton}>
         <Image
-          source={require("./assets/message.png")}
+          source={require("../../assets/message.png")}
           style={styles.messageIcon}
         />
       </TouchableOpacity>
@@ -74,7 +74,7 @@ const MySavedPage = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundContainer}>
         <ImageBackground
-          source={require("./assets/background.jpg")}
+          source={require("../../assets/background.jpg")}
           style={styles.background}
         >
           {/* Header */}

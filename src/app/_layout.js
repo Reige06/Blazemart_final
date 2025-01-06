@@ -2,25 +2,17 @@ import React, { useContext, useEffect } from "react";
 import { StyleSheet, ActivityIndicator, View, ImageBackground, SafeAreaView, Image, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { AuthProvider, AuthContext } from "./AuthProvider";
+import { AuthContext, AuthProvider } from "./AuthProvider";
 import { StatusBar } from "react-native";
-import Login from "./Login";
 import Register from "./Register";
 import ForgotPass from "./ForgotPass";
-import Home from "./Home";
-import VerifyPass from "./VerifyPass";
-import CreatePass from "./CreatePass";
-import ProfilePage from "./ProfilePage";
-import AdminLogin from "./dev/AdminLogin";
-import AdminHome from "./dev/AdminHome";
-import MySavedPage from "./MySavedPage";
-import Marketplace from "./Marketplace";
-import MessagePage from "./MessagePage";
-import SellProduct from "./SellProduct";
-import ProductSelectedHome from "./ProductSelectedHome";
-import Message from "./Message";
-import Notification from "./Notification";
-import MyProfile from "./Myprofile";
+import Login from "./Login";
+import DashboardLayout from "./dashboard/_layout";
+
+
+
+
+
 
 
 const Stack = createStackNavigator();
@@ -36,13 +28,13 @@ function SplashScreen({ navigation }) {
 
   return (
     <ImageBackground
-      source={require("./assets/background.jpg")}
+      source={require("../assets/background.jpg")}
       style={styles.background}
     >
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <Image
-            source={require("./assets/logo.png")}
+            source={require("../assets/logo.png")}
             style={styles.logoImage}
           />
           <Text style={styles.title}>BLAZEMART</Text>
@@ -51,7 +43,7 @@ function SplashScreen({ navigation }) {
           </Text>
           <View style={styles.footer}>
             <Image
-              source={require("./assets/ustp.png")}
+              source={require("../assets/ustp.png")}
               style={styles.footerImage}
             />
             <Text style={styles.footerText}>
@@ -93,20 +85,7 @@ export default function App() {
           <Stack.Screen name="Register" component={Register} />
 
           {/* Protected Screens */}
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="VerifyPass" component={VerifyPass} />
-          <Stack.Screen name="CreatePass" component={CreatePass} />
-          <Stack.Screen name="Marketplace" component={Marketplace} />
-          <Stack.Screen name="ProfilePage" component={ProfilePage} />
-          <Stack.Screen name="Admin_Login" component={AdminLogin} />
-          <Stack.Screen name="Admin_Home" component={AdminHome} />
-          <Stack.Screen name="MySavedPage" component={MySavedPage} />
-          <Stack.Screen name="MessagePage" component={MessagePage} />
-          <Stack.Screen name="SellProduct" component={SellProduct} />
-          <Stack.Screen name="ProductSelectedHome" component={ProductSelectedHome} />
-          <Stack.Screen name="Message" component={Message}/>
-          <Stack.Screen name="Notification" component={Notification}/>
-          <Stack.Screen name="MyProfile" component={MyProfile}/>
+          <Stack.Screen name="dashboard" component={DashboardLayout} />
 
         </Stack.Navigator>
       </NavigationContainer>

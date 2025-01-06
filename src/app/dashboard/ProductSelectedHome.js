@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { supabase } from "./supabase"; // Import your supabase client setup
+import { supabase } from "../supabase"; 
 
 const { width } = Dimensions.get("window");
 
@@ -23,7 +23,7 @@ export default function ProductSelectedHome({ route }) {
   const [seller, setSeller] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
-  const productId = route.params.productId; // Assuming productId is passed in route params
+  const productId = route.params.productId; 
 
   // Fetch current user data
   useEffect(() => {
@@ -130,9 +130,21 @@ export default function ProductSelectedHome({ route }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Back Arrow */}
+      <View style={styles.topNavigation}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Image
+            source={require("../../assets/back.png")}
+            style={styles.backIcon}
+          />
+        </TouchableOpacity>
+      </View>
       <View style={styles.backgroundContainer}>
         <ImageBackground
-          source={require("./assets/background.jpg")}
+          source={require("../../assets/background.jpg")}
           style={styles.background}
         >
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -141,60 +153,40 @@ export default function ProductSelectedHome({ route }) {
         </ImageBackground>
       </View>
 
-      <View style={styles.buttonContainer}>
-      <TouchableOpacity
-        style={[styles.button, styles.chatNowButton]}
-        disabled={isCurrentUserSeller}
-        onPress={() =>
-          navigation.navigate("Message", {
-            productId: product?.id,
-            sellerId: product?.user_id,
-            sellerName: seller?.full_name,
-          })
-        }
-      >
-        <Image
-          source={require("./assets/home/message.png")}
-          style={styles.buttonIcon}
-        />
-        <Text style={styles.buttonText}>Chat Now</Text>
-      </TouchableOpacity>
-        
-      </View>
+      {/* Buttons at the Bottom */}
       <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={styles.home_navCircle}>
-          <Image
-            source={require("./assets/navigation/home.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navCircle}
-          onPress={() => navigation.navigate("Marketplace")}
-        >
-          <Image
-            source={require("./assets/navigation/marketplace.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navCircle}
-          onPress={() => navigation.navigate("Notification")}
-        >
-          <Image
-            source={require("./assets/navigation/notifications.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navCircle}
-          onPress={() => navigation.navigate("ProfilePage")}
-        >
-          <Image
-            source={require("./assets/navigation/profile.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.button, styles.chatNowButton]}
+            disabled={isCurrentUserSeller}
+            onPress={() =>
+              navigation.navigate("Message", {
+                productId: product?.id,
+                sellerId: product?.user_id,
+                sellerName: seller?.full_name,
+              })
+            }
+          >
+            <Image
+              source={require("../../assets/home/message.png")}
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.buttonText}>Chat Now</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.saveButton]}
+            onPress={() =>
+              navigation.navigate("SellerProfile", { userId: product?.user_id })
+            }
+          >
+            <Image
+              source={require("../../assets/profile_icon.png")}
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.buttonText}>View Profile</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -212,53 +204,31 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: "cover",
   },
-  topContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 50,
-    paddingHorizontal: 35,
-    paddingBottom: 20,
-    justifyContent: "space-between",
-  },
-  searchBar: {
-    flex: 1,
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingLeft: 50, // Add padding to the left for the icon
-    position: "relative",
-    zIndex: 1, // Ensure the search bar is below the icon
-  },
-  searchIconContainer: {
+  backButton: {
     position: "absolute",
-    height: "100%",
-    width: 45, // Adjust width as needed
-    backgroundColor: "#4E56A0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 10,
-    zIndex: 2, // Ensure the icon is above the search bar
+    top: 50,
+    left: 15,
+    zIndex: 10,
+    
   },
+  backIcon: {
+    width: 25,
+    height: 25,
+    resizeMode: "contain",
+    
+  },
+  
   searchIcon: {
     width: 20,
     height: 20,
   },
-  topIcons: {
-    flexDirection: "row",
-  },
-  topIcon: {
-    width: 45,
-    height: 45,
-    marginLeft: 10,
-    resizeMode: "contain",
-    backgroundColor: "#4E56A0",
-    borderRadius: 30,
-  },
+ 
   scrollViewContent: {
-    paddingBottom: 90, // To avoid overlap with bottom navigation
+    paddingBottom: 90, 
+    
   },
   product_title_price_container: {
-    marginTop: 150, // Adjust to position below the image container
+    marginTop: 150, 
     marginHorizontal: 0,
     backgroundColor: "#4E56A0",
     padding: 10,
@@ -269,34 +239,13 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     overflow: "hidden",
     borderRadius: 0,
-    marginBottom: -150, // Adjust to overlap the white box
+    marginBottom: -150, 
     zIndex: 1,
   },
   productImage: {
-    width: width, // Ensure the image takes the full width of the screen
+    width: width, 
     height: "100%",
     resizeMode: "cover",
-  },
-  indicatorContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    backgroundColor: "#4E56A0",
-    paddingVertical: 5,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FFF",
-    marginHorizontal: 4,
-    opacity: 0.5,
-  },
-  activeIndicator: {
-    opacity: 1,
   },
   productTitle: {
     fontSize: 24,
@@ -339,117 +288,52 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#4E56A0",
   },
-  sectionSubtitle: {
-    fontSize: 16,
-    color: "#4E56A0",
-    marginBottom: 10,
-  },
   divider: {
     height: 1.5,
     backgroundColor: "#4E56A0",
     marginVertical: 5,
   },
 
-  //Seller Area
   sellerInfoBox: {
     backgroundColor: "#5775A4",
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
   },
-  sellerInfoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    padding: 10,
-  },
-  profileIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  sellerDetails: {
-    flex: 1,
-  },
   sellerName: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
   },
-  sellerContact: {
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  messageIconContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  messageIcon: {
-    width: 30,
-    height: 30,
-    marginRight: 10,
-    borderRadius: 15,
-  },
-  sendMessageText: {
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  blankContainer: {
-    height: 20, // Adjust height as needed
-  },
-  messageContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  messageInput: {
-    flex: 1,
-    height: 40,
-    borderColor: "#4E56A0",
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  sendButton: {
-    backgroundColor: "#FBB217",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  sendButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-
-  //End Seller Area
-
-  relatedProductImage: {
-    width: "100%",
-    height: 100,
-    borderRadius: 10,
+ 
+  icon: {
+    width: 28,
+    height: 28,
+    resizeMode: "contain",
   },
   
-  buttonContainer: {
-    position: "absolute",
-    bottom: 95,
-    left: 0,
-    right: 0,
+  bottomNavigation: {
+    height: 95,
+    backgroundColor: "#7190BF",
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    width: "90%",
   },
   button: {
-    flex: 1,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
-    borderRadius: 0,
-    marginHorizontal: 0,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: "45%",
   },
   chatNowButton: {
     backgroundColor: "#FBB217",
@@ -458,76 +342,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#4E56A0",
   },
   buttonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 20,
+    height: 20,
     marginRight: 10,
   },
   buttonText: {
     color: "#FFF",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  bottomNavigation: {
-    height: 95,
-    backgroundColor: "#7190BF",
-    borderRadius: 20,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 30,
-  },
-  navCircle: {
-    width: 60,
-    height: 60,
-    backgroundColor: "#4E56A0",
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  home_navCircle: {
-    width: 65,
-    height: 65,
-    backgroundColor: "#4E56A0",
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 4,
-    borderColor: "#fff",
-  },
-  icon: {
-    width: 28,
-    height: 28,
-    resizeMode: "contain",
-  },
-  
-  notificationContainer: {
-    position: "absolute",
-    top: 100,
-    left: 20,
-    right: 20,
-    backgroundColor: "#4E56A0",
-    padding: 13,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  notificationHeading: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 5,
-    textAlign: "left",
-  },
-  notificationDescription: {
-    color: "white",
     fontSize: 16,
-    textAlign: "justified",
+    fontWeight: "bold",
   },
-});
-
-
-
-
-      
-      
+  topNavigation: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#4E56A0",
+    paddingTop: 80,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    position: "relative",
+    justifyContent: "center",
+  },
+});   

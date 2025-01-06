@@ -16,7 +16,7 @@ const CategoryPage = () => {
 
   return (
     <ImageBackground
-      source={require("./assets/background.jpg")}
+      source={require("../../assets/background.jpg")}
       style={styles.background}
     >
       <View style={styles.container}>
@@ -24,7 +24,7 @@ const CategoryPage = () => {
         <View style={styles.topNavigation}>
           <TouchableOpacity onPress={() => navigation.navigate("Marketplace")}>
             <Image
-              source={require("./assets/search_category/back.png")}
+              source={require("../../assets/search_category/back.png")}
               style={styles.navIcon}
             />
           </TouchableOpacity>
@@ -34,7 +34,7 @@ const CategoryPage = () => {
         {/* Category Title */}
         <View style={styles.categoryContainer}>
           <Image
-            source={require("./assets/search_category/category.png")}
+            source={require("../../assets/search_category/category.png")}
             style={styles.categoryIcon}
           />
           <Text style={styles.categoryTitle}>

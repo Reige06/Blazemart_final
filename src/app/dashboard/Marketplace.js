@@ -13,15 +13,18 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { supabase } from "./supabase";
+import { supabase } from "../supabase";
+
 export default function Marketplace() {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("Sell");
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [productItems, setProductItems] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const categories = [
+    "All",
     "Electronics",
     "Furniture",
     "Food",
@@ -36,34 +39,37 @@ export default function Marketplace() {
     "Miscellaneous",
   ];
 
-  // Fetch products from the database
+  // Fetch products based on selected category
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, product_name, product_img, price");
-    
+        const query = supabase.from("products").select("id, product_name, product_img, price");
+
+        if (selectedCategory !== "All") {
+          query.ilike("category", selectedCategory);
+        }
+
+        const { data, error } = await query;
+
         if (error) {
           console.error("Error fetching products:", error.message);
           return;
         }
-    
+
         const productsWithPublicURLs = data.map((product) => ({
           ...product,
-          product_img: product.product_img || "https://via.placeholder.com/150", // Use placeholder if product_img is null or undefined
+          product_img: product.product_img || "https://via.placeholder.com/150", 
         }));
-    
+
         console.log("Fetched products with URLs:", productsWithPublicURLs);
-        setProductItems(productsWithPublicURLs); // Set state or handle the data as needed
+        setProductItems(productsWithPublicURLs); 
       } catch (err) {
         console.error("Error fetching products:", err.message);
       }
     };
-    
-    
+
     fetchProducts();
-  }, []);
+  }, [selectedCategory]);
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -77,7 +83,6 @@ export default function Marketplace() {
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     setCategoryModalVisible(false);
-    navigation.navigate("CategoryPage", { category });
   };
 
   const renderItem = ({ item }) => (
@@ -85,7 +90,7 @@ export default function Marketplace() {
       style={styles.productContainer}
       onPress={() =>
         navigation.navigate("ProductSelectedHome", {
-          productId: item.id, // Pass only the product ID
+          productId: item.id,
         })
       }
     >
@@ -98,42 +103,47 @@ export default function Marketplace() {
     </TouchableOpacity>
   );
 
+  const search = () => {
+    if (searchQuery.trim() !== "") {
+      navigation.navigate("SearchProd", { query: searchQuery.trim() });
+    } else {
+      alert("Please enter a search query!");
+    }
+  };
+
   return (  
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundContainer}>
         <ImageBackground
-          source={require("./assets/background.jpg")}
+          source={require("../../assets/background.jpg")}
           style={styles.background}
         >
           {/* Top Navigation */}
           <View style={styles.topContainer}>
             <View style={{ flex: 1, position: "relative" }}>
               <View style={styles.searchIconContainer}>
-                <Image
-                  source={require("./assets/home/search.png")}
-                  style={styles.searchIcon}
-                />
+                <TouchableOpacity onPress={search}>
+                  <Image
+                    source={require("../../assets/home/search.png")}
+                    style={styles.searchIcon}
+                  />
+                </TouchableOpacity>
               </View>
               <TextInput
                 style={styles.searchBar}
                 placeholder="Search Products..."
                 placeholderTextColor="#000"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={search}
               />
             </View>
             <View style={styles.topIcons}>
               <TouchableOpacity
-                onPress={() => navigation.navigate("MySavedPage")}
+                onPress={() => navigation.navigate("MsgPage")}
               >
                 <Image
-                  source={require("./assets/marketplace/heart.png")}
-                  style={styles.topIcon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("MessagePage")}
-              >
-                <Image
-                  source={require("./assets/marketplace/message.png")}
+                  source={require("../../assets/marketplace/message.png")}
                   style={styles.topIcon}
                 />
               </TouchableOpacity>
@@ -145,7 +155,7 @@ export default function Marketplace() {
             <View style={styles.cartAndTitle}>
               <View style={styles.cartContainer}>
                 <Image
-                  source={require("./assets/marketplace/cart.png")}
+                  source={require("../../assets/marketplace/cart.png")}
                   style={styles.cartIcon}
                 />
               </View>
@@ -154,7 +164,7 @@ export default function Marketplace() {
             <TouchableOpacity>
               <View style={styles.profileContainer}>
                 <Image
-                  source={require("./assets/marketplace/profile_icon.png")}
+                  source={require("../../assets/marketplace/profile_icon.png")}
                   style={styles.profileIcon}
                 />
               </View>
@@ -167,17 +177,12 @@ export default function Marketplace() {
               <TouchableOpacity
                 key={tab}
                 onPress={() => handleTabPress(tab)}
-                style={[
-                  styles.tabButton,
-                  activeTab === tab && styles.activeTabButton,
+                style={[ 
+                  styles.tabButton, 
+                  activeTab === tab && styles.activeTabButton 
                 ]}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab && styles.activeTabText,
-                  ]}
-                >
+                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
                   {tab}
                 </Text>
               </TouchableOpacity>
@@ -197,34 +202,25 @@ export default function Marketplace() {
           <View style={styles.bottomNavigation}>
             <TouchableOpacity
               style={styles.navCircle}
-              onPress={() => navigation.navigate("Home")}
+              onPress={() => navigation.navigate("Homepage")}
             >
               <Image
-                source={require("./assets/navigation/home.png")}
+                source={require("../../assets/navigation/home.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>
             <TouchableOpacity style={styles.marketplace_navCircle}>
               <Image
-                source={require("./assets/navigation/marketplace.png")}
+                source={require("../../assets/navigation/marketplace.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.navCircle}
-              onPress={() => navigation.navigate("Notification")}
+              onPress={() => navigation.navigate("Settings")}
             >
               <Image
-                source={require("./assets/navigation/notifications.png")}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.navCircle}
-              onPress={() => navigation.navigate("ProfilePage")}
-            >
-              <Image
-                source={require("./assets/navigation/profile.png")}
+                source={require("../../assets/navigation/profile.png")}
                 style={styles.icon}
               />
             </TouchableOpacity>
@@ -260,7 +256,8 @@ export default function Marketplace() {
   );
 }
 
-const styles = StyleSheet.create({
+
+export const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#EAF0FF",
@@ -290,22 +287,22 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     flex: 1,
-    backgroundColor: "#FFF", // Ensure the search bar has a white background
+    backgroundColor: "#FFF",
     borderRadius: 10,
     paddingVertical: 10,
-    paddingLeft: 50, // Add padding to the left for the icon
+    paddingLeft: 50, 
     position: "relative",
-    zIndex: 1, // Ensure the search bar is below the icon
+    zIndex: 1, 
   },
   searchIconContainer: {
     position: "absolute",
     height: "100%",
-    width: 45, // Adjust width as needed
+    width: 45, 
     backgroundColor: "#4E56A0",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
-    zIndex: 2, // Ensure the icon is above the search bar
+    zIndex: 2, 
   },
   searchIcon: {
     width: 20,
@@ -372,8 +369,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     backgroundColor: "#FFF",
-    marginHorizontal: 5, // Add margin between buttons
-    marginBottom: 20, // Add margin below buttons
+    marginHorizontal: 5, 
+    marginBottom: 20, 
   },
   activeTabButton: {
     backgroundColor: "#4E56A0",
@@ -387,27 +384,31 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
   productList: {
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingVertical: 20,
   },
   productContainer: {
     flex: 1,
     margin: 5,
-    backgroundColor: "#FFF",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
     alignItems: "center",
+    textAlign: "center",
+    height: 300,
   },
   productImage: {
-    width: '100%',
-    height: 200, // Adjust height as needed for larger images
+    width: "100%",
+    height: 190, 
     borderRadius: 10,
-    resizeMode: 'contain', // or 'contain' if you want the whole image to fit inside the container
+    marginBottom: 5,
+    resizeMode: "contain",
   },
   productTitle: {
     marginTop: 5,
     fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center"
   },
   productPrice: {
     marginTop: 5,
@@ -472,4 +473,5 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
   },
+  
 });

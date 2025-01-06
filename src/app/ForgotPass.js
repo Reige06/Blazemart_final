@@ -61,7 +61,7 @@ export default function ForgotPass() {
 
   return (
     <ImageBackground
-      source={require("./assets/background.jpg")}
+      source={require("../assets/background.jpg")}
       style={styles.background}
     >
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

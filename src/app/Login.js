@@ -7,11 +7,14 @@ import {
   ImageBackground,
   Image,
   Animated,
+  View,
+  Alert, // Import Alert
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import { AuthContext } from "./AuthProvider"; 
+import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from "./AuthProvider";
 
 export default function Login() {
   const navigation = useNavigation();
@@ -19,9 +22,9 @@ export default function Login() {
   const moveAnim = useRef(new Animated.Value(0)).current;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const { signIn, isLoading } = useContext(AuthContext); 
+  const { signIn, isLoading } = useContext(AuthContext);
 
   useEffect(() => {
     Animated.sequence([
@@ -38,28 +41,31 @@ export default function Login() {
     ]).start();
   }, []);
 
-  // Call signIn from AuthProvider
   const handleLogin = async () => {
-    setErrorMessage(""); 
-    const { error } = await signIn(email, password); 
+    const { error } = await signIn(email, password);
 
-    // Display the error if login fails and navigate to Home if login is successful
     if (error) {
-      setErrorMessage(error.message);
+      if (error.type === "invalid_credentials") {
+        Alert.alert("Login Failed", "Invalid credentials. Please try again.");
+      } else if (error.type === "invalid_password") {
+        Alert.alert("Login Failed", "Invalid password. Please check and retry.");
+      } else {
+        Alert.alert("Login Failed", error.message);
+      }
     } else {
-      navigation.navigate("Home"); 
+      navigation.navigate("dashboard", { screen: "Homepage" });
     }
   };
 
   return (
     <ImageBackground
-      source={require("./assets/background.jpg")}
+      source={require("../assets/background.jpg")}
       style={styles.background}
     >
       <Animated.View
         style={[styles.container, { transform: [{ translateY: moveAnim }] }]}
       >
-        <Image source={require("./assets/logo.png")} style={styles.logo} />
+        <Image source={require("../assets/logo.png")} style={styles.logo} />
         <Text style={styles.title}>BLAZEMART</Text>
         <Text style={styles.subtitle}>
           "Shop Smart, BlazeMart"{"\n"}The Trailblazers' Marketplace
@@ -76,18 +82,26 @@ export default function Login() {
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#555"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
+        <View style={styles.passwordField}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#555"
+            secureTextEntry={!isPasswordVisible}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          >
+            <Ionicons
+              name={isPasswordVisible ? "eye" : "eye-off"}
+              size={24}
+              color="#555"
+            />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.button}
@@ -101,7 +115,7 @@ export default function Login() {
             style={styles.buttonGradient}
           >
             <Text style={styles.buttonText}>
-              {isLoading ? "Logging in" : "LOGIN"}
+              {isLoading ? "LOGIN" : "LOGIN"}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -133,6 +147,7 @@ export default function Login() {
   );
 }
 
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -151,20 +166,20 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 150,
+    height: 150,
     marginTop: 430,
     marginBottom: 20,
   },
   title: {
     color: "#000",
-    fontSize: 45,
+    fontSize: 30,
     fontWeight: "800",
     textAlign: "center",
   },
   subtitle: {
     color: "#333",
-    fontSize: 17,
+    fontSize: 14,
     textAlign: "center",
     fontWeight: "800",
     fontStyle: "italic",
@@ -179,22 +194,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     marginVertical: 5,
-    textAlign: "center",
+    textAlign: 'left',
     borderColor: "#7190BF",
     borderWidth: 2,
   },
+  passwordField: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "75%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderColor: "#7190BF",
+    borderWidth: 2,
+    marginVertical: 5,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 45,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "left",
+  },
+  eyeIcon: {
+    paddingHorizontal: 10,
+  },
   forgotPassword: {
-    color: "#000",
+    color: "#4e5d94",
     fontSize: 16,
     fontWeight: "800",
     textAlign: "right",
     width: "80%",
     marginTop: 5,
-    textDecorationLine: "underline",
   },
   button: {
     width: "45%",
-    height: 70,
+    height: 50,
     borderRadius: 10,
     overflow: "hidden",
     marginVertical: 15,
@@ -220,7 +255,6 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     color: "#4e5d94",
-    textDecorationLine: "underline",
     fontWeight: "800",
   },
   loadingOverlay: {
@@ -230,18 +264,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 10,
   },
-
   adminButton: {
-    width: 50, 
+    width: 50,
     height: 50,
     backgroundColor: "#4E56A0",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 5,
-    marginTop: 20, 
+    marginTop: 20,
   },
   adminIcon: {
-    width: 30, 
+    width: 30,
     height: 30,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -7,8 +7,6 @@ import {
   Image,
   ImageBackground,
   TouchableOpacity,
-  ActivityIndicator,
-  Animated,
   TextInput,
   ScrollView,
 } from "react-native";
@@ -16,9 +14,18 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function Home() {
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [searchQuery, setSearchQuery] = useState(""); // State for search input
 
+  // Handle Search Functionality
+  const search = () => {
+    if (searchQuery.trim() !== "") {
+      navigation.navigate("SearchProd", { query: searchQuery.trim() });
+    } else {
+      alert("Please enter a search query!");
+    }
+  };
+  console.log(search);
+  // Example product items
   const productItems = Array.from({ length: 10 }, (_, i) => ({
     id: i,
     title: `Product ${i + 1}`,
@@ -29,51 +36,38 @@ export default function Home() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundContainer}>
         <ImageBackground
-          source={require("./assets/background.jpg")}
+          source={require("../../assets/background.jpg")}
           style={styles.background}
         >
-          {/* Top Container with Search, Heart, and Message Icons */}
+          {/* Top Container with Search Bar */}
           <View style={styles.topContainer}>
             <View style={{ flex: 1, position: "relative" }}>
               <View style={styles.searchIconContainer}>
-                <Image
-                  source={require("./assets/home/search.png")}
-                  style={styles.searchIcon}
-                />
+                <TouchableOpacity onPress={search}>
+                  <Image
+                    source={require("../../assets/home/search.png")}
+                    style={styles.searchIcon}
+                  />
+                </TouchableOpacity>
               </View>
               <TextInput
                 style={styles.searchBar}
                 placeholder="Search Products..."
                 placeholderTextColor="#000"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={search}
               />
-            </View>
-            <View style={styles.topIcons}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("MySavedPage")}
-              >
-                <Image
-                  source={require("./assets/home/heart.png")}
-                  style={styles.topIcon}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("MessagePage")}
-              >
-                <Image
-                  source={require("./assets/home/message.png")}
-                  style={styles.topIcon}
-                />
-              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Scrollable Sections */}
+          {/* Scrollable Product Sections */}
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
             {/* Featured Section */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
                 <Image
-                  source={require("./assets/home/featured.png")}
+                  source={require("../../assets/home/featured.png")}
                   style={styles.sectionIcon}
                 />
                 <Text style={styles.sectionTitle}>Featured</Text>
@@ -94,7 +88,7 @@ export default function Home() {
                     }
                   >
                     <Image
-                      source={require("./assets/home/product.png")}
+                      source={require("../../assets/home/product.png")}
                       style={styles.productImage}
                     />
                     <Text style={styles.productTitle}>{item.title}</Text>
@@ -108,7 +102,7 @@ export default function Home() {
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
                 <Image
-                  source={require("./assets/home/recent.png")}
+                  source={require("../../assets/home/recent.png")}
                   style={styles.sectionIcon}
                 />
                 <Text style={styles.sectionTitle}>Recently Viewed</Text>
@@ -121,7 +115,7 @@ export default function Home() {
                 {productItems.map((item) => (
                   <View key={item.id} style={styles.productContainer}>
                     <Image
-                      source={require("./assets/home/product.png")}
+                      source={require("../../assets/home/product.png")}
                       style={styles.productImage}
                     />
                     <Text style={styles.productTitle}>{item.title}</Text>
@@ -138,7 +132,7 @@ export default function Home() {
       <View style={styles.bottomNavigation}>
         <TouchableOpacity style={styles.home_navCircle}>
           <Image
-            source={require("./assets/navigation/home.png")}
+            source={require("../../assets/navigation/home.png")}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -147,25 +141,17 @@ export default function Home() {
           onPress={() => navigation.navigate("Marketplace")}
         >
           <Image
-            source={require("./assets/navigation/marketplace.png")}
+            source={require("../../assets/navigation/marketplace.png")}
             style={styles.icon}
           />
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.navCircle}
-          onPress={() => navigation.navigate("Notification")}
+          onPress={() => navigation.navigate("Settings")}
         >
           <Image
-            source={require("./assets/navigation/notifications.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navCircle}
-          onPress={() => navigation.navigate("ProfilePage")}
-        >
-          <Image
-            source={require("./assets/navigation/profile.png")}
+            source={require("../../assets/navigation/profile.png")}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -174,10 +160,12 @@ export default function Home() {
   );
 }
 
+
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#7190BF", // Bottom portion color
+    backgroundColor: "#7190BF", 
   },
   backgroundContainer: {
     flex: 1,
@@ -189,29 +177,42 @@ const styles = StyleSheet.create({
   topContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 45,
     paddingHorizontal: 35,
+    paddingVertical: 10,
+    paddingTop: 50,
     paddingBottom: 20,
     justifyContent: "space-between",
+    height: 115,
+    width: "303"
   },
   searchBar: {
     flex: 1,
     backgroundColor: "#FFF",
     borderRadius: 10,
     paddingVertical: 10,
-    paddingLeft: 50, // Add padding to the left for the icon
+    paddingLeft: 50,
     position: "relative",
-    zIndex: 1, // Ensure the search bar is below the icon
+    zIndex: 1,
+    
   },
   searchIconContainer: {
     position: "absolute",
-    height: "100%",
-    width: 45, // Adjust width as needed
+    height: "100%", 
     backgroundColor: "#4E56A0",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
-    zIndex: 2, // Ensure the icon is above the search bar
+    zIndex: 2,
+    width: 45,
+    height: 45,
+  },
+  searchBarContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    paddingHorizontal: 10,
   },
   searchIcon: {
     width: 20,
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: 90, // To avoid overlap with bottom navigation
+    paddingBottom: 90, 
   },
   sectionContainer: {
     marginVertical: 15,
@@ -248,12 +249,12 @@ const styles = StyleSheet.create({
     marginLeft: 25,
   },
   sectionIcon: {
-    width: 45, // Increased width to accommodate padding
-    height: 45, // Increased height to accommodate padding
+    width: 45, 
+    height: 45,
     margin: 10,
     marginRight: 5,
     backgroundColor: "#201b51",
-    borderRadius: 10, // Adjusted border radius for a perfect circle
+    borderRadius: 10, 
   },
   sectionTitle: {
     fontSize: 20,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   productContainer: {
-    backgroundColor: "#7190BF",
+    backgroundColor: "#fff",
     marginLeft: 20,
     padding: 5,
     borderRadius: 10,
@@ -274,20 +275,20 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: "100%",
-    height: 190, // Adjusted height
+    height: 190, 
     borderRadius: 10,
     marginBottom: 5,
     resizeMode: "contain",
   },
   productTitle: {
     fontSize: 16,
-    color: "#FFF",
+    color: "#000",
     fontWeight: "600",
     textAlign: "center",
   },
   productPrice: {
     fontSize: 12,
-    color: "#FFF",
+    color: "#4E56A0",
     marginBottom: 10,
   },
   bottomNavigation: {

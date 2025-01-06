@@ -13,11 +13,11 @@ import {
 } from "react-native";
 import { RadioButton } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
-import { supabase } from "./supabase";
-import { AuthContext } from "./AuthProvider";
+import { supabase } from "../supabase";
+import { AuthContext } from "../AuthProvider";
 
 const SellProduct = ({ navigation }) => {
-  const { user, isLoading } = useContext(AuthContext); // Get user and loading state from AuthContext
+  const { user, isLoading } = useContext(AuthContext);
   const [photos, setPhotos] = useState([]);
   const [condition, setCondition] = useState("new");
   const [category, setCategory] = useState("");
@@ -40,18 +40,18 @@ const SellProduct = ({ navigation }) => {
         const fileName = `${Date.now()}_${photo.uri.split('/').pop()}`;
 
         try {
-          // Upload the file
+          
           const { data, error } = await supabase.storage
             .from('product_bucket')
             .upload(fileName, {
               uri: photo.uri,
-              type: 'image/jpeg', // Adjust MIME type if needed
+              type: 'image/jpeg',
               name: fileName,
             });
 
           if (error) throw new Error(`Upload error: ${error.message}`);
 
-          // Retrieve the public URL
+          
           const { data: urlData } = supabase.storage
             .from('product_bucket')
             .getPublicUrl(fileName);
@@ -60,7 +60,7 @@ const SellProduct = ({ navigation }) => {
             throw new Error('Unable to retrieve public URL.');
           }
 
-          // Add the public URL to the photos array
+          
           setPhotos([...photos, urlData.publicUrl]);
         } catch (err) {
           console.error('Error during upload:', err.message);
@@ -80,23 +80,23 @@ const SellProduct = ({ navigation }) => {
   
 
   const handleSubmit = async () => {
-    if (isSubmitting) return; // Prevent double submission
-    setIsSubmitting(true); // Set submitting state
+    if (isSubmitting) return; 
+    setIsSubmitting(true);
   
-    // Validate input fields
+    
     if (!productName || photos.length === 0 || !category || !price) {
       Alert.alert("Incomplete Information", "Please fill in all fields.");
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false); 
       return;
     }
     if (isNaN(price) || parseFloat(price) <= 0) {
       Alert.alert("Invalid Price", "Please enter a valid positive number.");
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false); 
       return;
     }
   
     try {
-      const firstPhoto = photos[0]; // Use the first photo from the photos array
+      const firstPhoto = photos[0]; 
       console.log("User ID being used for product submission:", user.id);
   
       // Insert product data into the Supabase database
@@ -128,7 +128,7 @@ const SellProduct = ({ navigation }) => {
         error.message || "Failed to submit product. Please try again."
       );
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false); 
     }
   };
   
@@ -136,7 +136,7 @@ const SellProduct = ({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("./assets/sell/background.jpg")}
+      source={require("../../assets/sell/background.jpg")}
       style={styles.background}
     >
       <View style={styles.container}>
@@ -144,17 +144,17 @@ const SellProduct = ({ navigation }) => {
         <View style={styles.topNavigation}>
           <TouchableOpacity onPress={() => navigation.navigate("Marketplace")}>
             <Image
-              source={require("./assets/sell/back.png")}
+              source={require("../../assets/sell/back.png")}
               style={styles.navIcon}
             />
           </TouchableOpacity>
           <Text style={styles.navTitle}>Sell a Product</Text>
           <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
             <Image
-              source={require("./assets/sell/check.png")}
+              source={require("../../assets/sell/check.png")}
               style={[
                 styles.navIcon,
-                { opacity: isSubmitting ? 0.5 : 1 }, // Visual feedback
+                { opacity: isSubmitting ? 0.5 : 1 }, 
               ]}
             />
           </TouchableOpacity>
@@ -164,7 +164,7 @@ const SellProduct = ({ navigation }) => {
           {/* Section Header */}
           <View style={styles.sectionHeader}>
             <Image
-              source={require("./assets/sell/product_details.png")}
+              source={require("../../assets/sell/product_details.png")}
               style={styles.sectionIcon}
             />
             <Text style={styles.sectionTitle}>Product Details</Text>
@@ -181,7 +181,7 @@ const SellProduct = ({ navigation }) => {
                     onPress={() => handleRemovePhoto(index)}
                   >
                     <Image
-                      source={require("./assets/sell/remove_photo.png")}
+                      source={require("../../assets/sell/remove_photo.png")}
                       style={styles.removeIcon}
                     />
                   </TouchableOpacity>
@@ -193,7 +193,7 @@ const SellProduct = ({ navigation }) => {
                   onPress={handleAddPhoto}
                 >
                   <Image
-                    source={require("./assets/sell/photo_add.png")}
+                    source={require("../../assets/sell/photo_add.png")}
                     style={styles.addPhotoIcon}
                   />
                   <Text style={styles.insertPhotoText}>Insert a Photo</Text>
@@ -236,7 +236,7 @@ const SellProduct = ({ navigation }) => {
             <View style={styles.conditionContainer}>
               <View style={styles.conditionHeader}>
                 <Image
-                  source={require("./assets/sell/condition.png")}
+                  source={require("../../assets/sell/condition.png")}
                   style={styles.conditionIcon}
                 />
                 <Text style={styles.conditionTitle}>Condition</Text>
@@ -271,7 +271,7 @@ const SellProduct = ({ navigation }) => {
                 {category || "Select Category"}
               </Text>
               <Image
-                source={require("./assets/sell/categories_popup_scroll.png")}
+                source={require("../../assets/sell/categories_popup_scroll.png")}
                 style={styles.categoryIcon}
               />
             </TouchableOpacity>

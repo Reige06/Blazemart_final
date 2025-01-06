@@ -78,7 +78,7 @@ export default function VerifyPass() {
 
   return (
     <ImageBackground
-      source={require("./assets/background.jpg")}
+      source={require("../assets/background.jpg")}
       style={styles.background}
     >
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
@@ -101,13 +101,13 @@ export default function VerifyPass() {
           placeholder="Enter OTP Code"
           placeholderTextColor="#555"
           keyboardType="numeric"
-          maxLength={6} // Limit to 6 characters
+          maxLength={6} 
           onChangeText={(text) => {
-            // Allow only numeric characters
+            
             const numericText = text.replace(/[^0-9]/g, "");
-            setOtpCode(numericText); // Assuming you have an `otpCode` state to store the input
+            setOtpCode(numericText); 
           }}
-          value={otpCode} // Bind the input value to otpCode state
+          value={otpCode} 
         />
 
         <Text style={styles.timer}>{timer}s</Text>
